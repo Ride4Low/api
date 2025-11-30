@@ -14,7 +14,8 @@ import (
 )
 
 var (
-	httpAddr = env.GetString("HTTP_ADDR", ":8081")
+	httpAddr       = env.GetString("HTTP_ADDR", ":8081")
+	tripServiceURL = env.GetString("TRIP_SERVICE_URL", "localhost:9093")
 )
 
 func main() {
@@ -26,7 +27,13 @@ func main() {
 
 	r.Use(enableCORS)
 
-	h := NewHandler()
+	tripClient, err := NewTripClient(tripServiceURL)
+	if err != nil {
+		log.Fatalf("Failed to create trip client: %v", err)
+	}
+	defer tripClient.Close()
+
+	h := NewHandler(tripClient)
 	h.RegisterRoutes(r)
 
 	server := &http.Server{
