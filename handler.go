@@ -20,10 +20,10 @@ func (h *Handler) RegisterRoutes(r *gin.Engine) {
 	tripGroup.POST("/start", h.startTrip)
 }
 
-func (h *Handler) ErrorResponse(c *gin.Context, httpCode int, code string, message string) {
+func (h *Handler) ErrorResponse(c *gin.Context, httpCode int, code ErrorCodes, message string) {
 	c.JSON(httpCode, APIResponse{
 		Error: &APIError{
-			Code:    code,
+			Code:    string(code),
 			Message: message,
 		},
 	})
