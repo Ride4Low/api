@@ -1,4 +1,4 @@
-module github.com/sithu-go/ride-share/api
+module github.com/ride4Low/api
 
 go 1.25.3
 
