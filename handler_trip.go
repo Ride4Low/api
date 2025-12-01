@@ -23,5 +23,17 @@ func (h *Handler) previewTrip(c *gin.Context) {
 }
 
 func (h *Handler) startTrip(c *gin.Context) {
+	var req startTripRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.ErrorResponse(c, http.StatusBadRequest, InvalidRequestError, err.Error())
+		return
+	}
 
+	trip, err := h.tripClient.tripClient.CreateTrip(c.Request.Context(), req.toProto())
+	if err != nil {
+		h.ErrorResponse(c, http.StatusInternalServerError, CreateTripError, err.Error())
+		return
+	}
+
+	h.DataResponse(c, http.StatusOK, trip)
 }
