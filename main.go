@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sithu-go/ride-share/contracts/env"
+	"github.com/ride4Low/contracts/env"
 )
 
 var (
