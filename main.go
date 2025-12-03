@@ -15,7 +15,7 @@ import (
 
 var (
 	httpAddr       = env.GetString("HTTP_ADDR", ":8081")
-	tripServiceURL = env.GetString("TRIP_SERVICE_URL", "localhost:9093")
+	tripServiceURL = env.GetString("TRIP_SERVICE_ADDR", "localhost:9093")
 )
 
 func main() {
