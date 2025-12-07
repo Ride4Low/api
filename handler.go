@@ -5,12 +5,16 @@ import (
 )
 
 type Handler struct {
-	tripClient *TripClient
+	tripClient       *TripClient
+	stripeWebhookKey string
+	publisher        EventPublisher
 }
 
-func NewHandler(tripClient *TripClient) *Handler {
+func NewHandler(tripClient *TripClient, stripeWebhookKey string, publisher EventPublisher) *Handler {
 	return &Handler{
-		tripClient: tripClient,
+		tripClient:       tripClient,
+		stripeWebhookKey: stripeWebhookKey,
+		publisher:        publisher,
 	}
 }
 
@@ -18,6 +22,8 @@ func (h *Handler) RegisterRoutes(r *gin.Engine) {
 	tripGroup := r.Group("/api/trip")
 	tripGroup.POST("/preview", h.previewTrip)
 	tripGroup.POST("/start", h.startTrip)
+
+	r.Group("/webhook").POST("/stripe", h.handleWebhookStripe)
 }
 
 func (h *Handler) ErrorResponse(c *gin.Context, httpCode int, code ErrorCodes, message string) {

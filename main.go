@@ -11,11 +11,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/ride4Low/contracts/env"
+	"github.com/ride4Low/contracts/pkg/rabbitmq"
 )
 
 var (
 	httpAddr       = env.GetString("HTTP_ADDR", ":8081")
 	tripServiceURL = env.GetString("TRIP_SERVICE_ADDR", "localhost:9093")
+	rabbitMQURI    = env.GetString("RABBITMQ_URI", "amqp://guest:guest@localhost:5672/")
 )
 
 func main() {
@@ -33,7 +35,16 @@ func main() {
 	}
 	defer tripClient.Close()
 
-	h := NewHandler(tripClient)
+	rmq, err := rabbitmq.NewRabbitMQ(rabbitMQURI)
+	if err != nil {
+		log.Fatalf("Failed to create RabbitMQ: %v", err)
+	}
+	defer rmq.Close()
+
+	rmqPublisher := rabbitmq.NewPublisher(rmq)
+	eventPublisher := NewAmqpPublisher(rmqPublisher)
+
+	h := NewHandler(tripClient, env.GetString("STRIPE_WEBHOOK_KEY", ""), eventPublisher)
 	h.RegisterRoutes(r)
 
 	server := &http.Server{
