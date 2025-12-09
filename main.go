@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/ride4Low/contracts/env"
+	"github.com/ride4Low/contracts/pkg/otel"
 	"github.com/ride4Low/contracts/pkg/rabbitmq"
 )
 
@@ -18,15 +19,30 @@ var (
 	httpAddr       = env.GetString("HTTP_ADDR", ":8081")
 	tripServiceURL = env.GetString("TRIP_SERVICE_ADDR", "localhost:9093")
 	rabbitMQURI    = env.GetString("RABBITMQ_URI", "amqp://guest:guest@localhost:5672/")
+	jaegerEndpoint = env.GetString("JAEGER_ENDPOINT", "http://localhost:4317")
 )
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	// ctx, cancel := context.WithCancel(context.Background())
-	// defer cancel()
+	log.SetFlags(log.LstdFlags | log.Llongfile)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Setup OpenTelemetry
+	otelCfg := otel.DefaultConfig("api")
+	otelCfg.JaegerEndpoint = jaegerEndpoint
+	otelProvider, err := otel.Setup(ctx, otelCfg)
+	if err != nil {
+		log.Fatalf("Failed to setup OpenTelemetry: %v", err)
+	}
+	defer func() {
+		if err := otelProvider.Shutdown(ctx); err != nil {
+			log.Printf("Error shutting down OpenTelemetry provider: %v", err)
+		}
+	}()
 
 	r := gin.Default()
 
+	r.Use(otel.GinMiddleware("api"))
 	r.Use(enableCORS)
 
 	tripClient, err := NewTripClient(tripServiceURL)
