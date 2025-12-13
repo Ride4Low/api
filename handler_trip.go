@@ -100,6 +100,25 @@ func (h *Handler) handleWebhookStripe(c *gin.Context) {
 }
 
 func (h *Handler) payTrip(c *gin.Context) {
-	h.DataResponse(c, http.StatusOK, "ok")
+	tripID := c.GetHeader("TripID")
+	if tripID == "" {
+		h.ErrorResponse(c, http.StatusBadRequest, InvalidRequestError, "trip ID is required")
+		return
+	}
+	log.Println("TripID", tripID)
+
+	payload := events.PaymentStatusUpdateData{
+		TripID: tripID,
+	}
+
+	err := h.publisher.PublishPaymentSuccess(c.Request.Context(), &payload)
+	if err != nil {
+		log.Printf("Error publishing payment success event: %v", err)
+		h.ErrorResponse(c, http.StatusInternalServerError, InvalidRequestError, err.Error())
+		return
+	}
+	h.DataResponse(c, http.StatusOK, gin.H{
+		"tripID": tripID,
+	})
 
 }
