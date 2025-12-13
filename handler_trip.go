@@ -100,7 +100,6 @@ func (h *Handler) handleWebhookStripe(c *gin.Context) {
 }
 
 func (h *Handler) payTrip(c *gin.Context) {
-
 	h.DataResponse(c, http.StatusOK, "ok")
 
 }

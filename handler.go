@@ -1,6 +1,9 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"log"
 	"time"
 
 	x402 "github.com/coinbase/x402/go"
@@ -41,12 +44,40 @@ func (h *Handler) ApplyX402Middleware(r *gin.Engine) {
 	facilitatorURL := env.GetString("FACILITATOR_ENDPOINT", "http://localhost:4022")
 	network := x402.ParseNetwork("eip155:84532")
 
+	dynamicPrice := func(ctx context.Context, hc x402http.HTTPRequestContext) (x402.Price, error) {
+
+		adapter, ok := hc.Adapter.(*ginmw.GinAdapter)
+		if !ok {
+			return nil, errors.New("not a gin adapter")
+		}
+
+		var x402Price x402.Price
+
+		tripID := adapter.GetHeader("TripID")
+		log.Println(tripID)
+		// find trip in trip service to get price
+		// or get jwt payload and validate
+
+		// for simple usage, I'm just gonna extract Price from URL
+		price := adapter.GetHeader("Price")
+		log.Println(price)
+
+		if price == "" || price == "0" {
+			return nil, errors.New("price is empty or zero")
+		}
+
+		x402Price = price
+
+		return x402Price, nil
+	}
+
 	routes := x402http.RoutesConfig{
 		"POST /api/trip/pay": {
 			Accepts: x402http.PaymentOptions{
 				{
-					Scheme:  "exact",
-					Price:   "$0.001",
+					Scheme: "exact",
+					// Price:   "$0.001",
+					Price:   x402http.DynamicPriceFunc(dynamicPrice),
 					Network: network,
 					PayTo:   evmAddress,
 				},
