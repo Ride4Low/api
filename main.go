@@ -61,6 +61,7 @@ func main() {
 	eventPublisher := NewAmqpPublisher(rmqPublisher)
 
 	h := NewHandler(tripClient, env.GetString("STRIPE_WEBHOOK_KEY", ""), eventPublisher)
+	h.ApplyX402Middleware(r)
 	h.RegisterRoutes(r)
 
 	server := &http.Server{
